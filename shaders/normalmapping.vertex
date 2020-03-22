@@ -1,0 +1,52 @@
+#version 330 core
+
+layout(location = 0) in vec3 vertex;
+layout(location = 1) in vec2 uvs;
+layout(location = 2) in vec3 normals;
+layout(location = 3) in vec3 tangent;
+layout(location = 4) in vec3 bitangent;
+
+out vec2 UV;
+out vec3 pos_in_world;
+out vec3 eye_cam;
+out vec3 light_cam;
+out vec3 light_tangent;
+out vec3 eye_tangent;
+out vec4 shadow_coord;
+
+uniform mat4 MVP;
+uniform mat4 V;
+uniform mat4 M;
+uniform mat3 MV;
+uniform vec3 light_pos;
+uniform mat4 D_MVP;
+
+void main(){
+
+	gl_Position =  MVP * vec4(vertex, 1);
+	
+	pos_in_world = (M * vec4(vertex, 1)).xyz;
+
+	shadow_coord = D_MVP * vec4(vertex, 1);
+
+	vec3 vertex_cam = (V * M * vec4(vertex, 1)).xyz;
+	eye_cam = vec3(0, 0, 0) - vertex_cam;
+
+	vec3 light_pos_cam = (V * vec4(light_pos, 1)).xyz;
+	light_cam = light_pos_cam + eye_cam;
+	
+	UV = uvs;
+	//в карте нормалей нормаль всегда направлена в направлении положительной полуоси oZ
+
+	vec3 tangent_cam = MV * tangent;
+	vec3 bitangent_cam = MV * bitangent;
+	vec3 normal_cam = MV * normals;
+	//обратная матрица смены базиса(из касательного пространства)
+	mat3 TBN = transpose(mat3(tangent_cam,
+		bitangent_cam,
+		normal_cam));
+	//перевели все в касательное пространство
+	light_tangent = TBN * light_cam;
+	eye_tangent =  TBN * eye_cam;
+}
+

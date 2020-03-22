@@ -1,0 +1,91 @@
+#version 330 core
+
+in vec2 UV;
+in vec3 pos_in_world;
+in vec3 normal_cam;
+in vec3 eye_cam;
+in vec3 light_cam;
+in vec4 shadow_coord;
+
+
+layout(location = 0) out vec4 out_color;
+
+uniform sampler2D my_texture;
+uniform sampler2DShadow shadow_map;
+uniform float if_fog;
+uniform vec3 light_in_world;
+
+const vec3 fogColor = vec3(0.5, 0.6,0.5);
+
+/*vec2 random_variable[4] = vec2[]( 
+   vec2(-0.94201624, -0.39906216 ), 
+   vec2( 0.94558609, -0.76890725 ), 
+   vec2( -0.094184101, -0.92938870 ), 
+   vec2( 0.34495938, 0.29387760),
+    
+);*/
+vec2 random_variable[5] = vec2[]( 
+   vec2(-0.8825786639532112, -1.1591626419325909), 
+   vec2(-2.365044021567219, 0.1000489055537053),              //нормальное распределение
+   vec2(-0.04948058346346348, -0.29587510214443763), 
+   vec2(1.3147877810496098, 0.7153375522252813),
+   vec2(-0.7495015286520555, -1.0228051063289272) 
+);
+void main()
+{
+	vec3 light_color = vec3(1, 1, 1);
+	float light_power = 1.0f;
+	float dist = length(light_in_world - pos_in_world);
+
+	vec3 Diffuse_Color = texture(my_texture, UV).rgb;
+	vec3 Ambient_Color = vec3(0.1, 0.1, 0.1) * Diffuse_Color;
+	vec3 Specular_Color = vec3(0.3, 0.3, 0.3);
+
+	vec3 n = normalize(normal_cam);
+	vec3 l = normalize(light_cam);
+
+	vec3 h = normalize(light_cam + eye_cam);
+	float cos_alpha = max(dot(n, l), 0);
+	
+	vec3 e = normalize(eye_cam);
+	
+	vec3 r = reflect(-l, n); //функция отражения, вектор указывающий направление отражения, -l вектор падения, n вектор нормали отражающей пов-ти
+	
+	float cos_betta = max(dot(e, r), 0);
+	
+	float visibility = 1.0;
+
+	float bias = 0.003;
+	for (int i = 0; i < 5; i++)
+	{
+		int index = i;
+		visibility -= 0.15 * (1.0 - texture(shadow_map, vec3(shadow_coord.xy + random_variable[index] / 1000.0, (shadow_coord.z - bias) / shadow_coord.w)));
+	}
+
+	vec3 color = Ambient_Color +
+		visibility * Diffuse_Color * light_color * light_power * cos_alpha +
+		visibility * Specular_Color * light_color * light_power * pow(cos_betta, 16);
+	//FOG
+	
+	if (if_fog == 1.0)
+	{
+		vec3 finalColor = vec3(0, 0, 0);
+		float dist = 0;
+		float fogFactor = 0;
+   		dist = length(eye_cam);
+		
+		fogFactor = 0.4 * (pos_in_world.y - 1.3);
+		fogFactor *= fogFactor;
+		fogFactor = clamp(exp(-0.4 * fogFactor * dist), 0.0, 1.0);
+
+		if (pos_in_world.y < 1.3)
+			finalColor = mix(fogColor, color, fogFactor);
+		else
+			if (pos_in_world.y > 1.3)
+				finalColor = mix(fogColor, color, 1);
+		out_color = vec4(finalColor, 1);
+	}
+	else
+		out_color = vec4(color, 1);
+
+}

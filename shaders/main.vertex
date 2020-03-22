@@ -1,0 +1,45 @@
+#version 330 core
+
+layout(location = 0) in vec3 vertex;
+layout(location = 1) in vec2 uvs;
+layout(location = 2) in vec3 normal;
+
+out vec2 UV;
+out vec3 pos_in_world;
+out vec3 normal_cam;
+out vec3 eye_cam;
+out vec3 light_cam;
+out vec4 shadow_coord;
+
+uniform mat4 MVP;
+uniform mat4 V;
+uniform mat4 M;
+uniform vec3 light_in_world;
+uniform vec3 eye_world;
+uniform mat4 D_MVP;
+
+void main()
+{
+	gl_Position =  MVP * vec4(vertex, 1);
+	shadow_coord = D_MVP * vec4(vertex, 1);
+
+	//вершина в мире
+	pos_in_world = (M * vec4(vertex, 1)).xyz;
+
+	//вектор от вершины к камере
+	eye_cam = vec3(0, 0, 0) - (V * M * vec4(vertex, 1)).xyz;
+	
+	//для Фонга
+	//light_cam = (V * vec4(light_in_world, 0)).xyz;
+
+	//вектор от вершины к источнику света в пр-ве камеры
+	//координата источника
+	vec3 light_pos_cam = (V * vec4(light_in_world, 1)).xyz;
+	
+	light_cam = light_pos_cam + eye_cam;
+
+	//normal_cam = transpose(inverse(mat3(M))) * normal;
+	normal_cam = (V * M * vec4(normal, 0)).xyz;
+	UV = uvs;
+}
+
