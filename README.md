@@ -7,7 +7,9 @@ Implemented effects:
   3. Normal Mapping (spider);
   4. Non-standard lighting model (Cook-Torrens, ball);
   5. Fuzzy shadows (shadow map).
- Moving around the scene : A, D, S, W;
- Enable fog : F;
- Disable fog : G;
- To close the window : ESC.
+ 
+ >Moving around the scene : A, D, S, W;
+ >Enable fog : F;
+ >Disable fog : G;
+ >To close the window : ESC.
+ >.obj files created with Blender.
