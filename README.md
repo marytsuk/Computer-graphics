@@ -1,4 +1,4 @@
-# Computer-graphics
+# Computer-graphics_1
 OpenGL and GLSL
 
 Implemented effects:
